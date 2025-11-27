@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button"
-import { Dumbbell, Sparkles, LineChart, Apple, Zap } from "lucide-react"
+import { Dumbbell, LineChart, Apple, Zap } from "lucide-react"
 import { Link } from "react-router-dom"
 
 export default function HomePage() {

@@ -1,6 +1,5 @@
 import { Dumbbell, User, Settings, FileText, LogOut } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/hooks/use-auth"
 import { ThemeToggle } from "@/components/theme-toggle"
