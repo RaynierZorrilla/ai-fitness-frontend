@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
 import { useTimer } from "@/hooks/use-timer"
+import { AppHeader } from "@/components/layout/app-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,7 @@ export default function WorkoutPlayerPage() {
   const [searchParams] = useSearchParams()
   const day = searchParams.get("day")
   const { user, isLoading: authLoading } = useAuth()
-  const { routine, isLoading, fetchLatestRoutine } = useRoutine()
+  const { routine, isLoading, fetchCurrentRoutine } = useRoutine()
   const { timerSeconds, isTimerRunning, startTimer, stopTimer, resetTimer } = useTimer()
 
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
@@ -29,7 +30,7 @@ export default function WorkoutPlayerPage() {
 
   useEffect(() => {
     if (user) {
-      fetchLatestRoutine()
+      fetchCurrentRoutine()
     }
   }, [user])
 
@@ -46,7 +47,7 @@ export default function WorkoutPlayerPage() {
     return null
   }
 
-  const dayWorkout = routine.days.find((d) => d.day.toLowerCase() === day.toLowerCase())
+  const dayWorkout = routine.days.find((d) => d.dayOfWeek.toLowerCase() === day?.toLowerCase())
 
   if (!dayWorkout) {
     navigate("/workout")
@@ -86,6 +87,7 @@ export default function WorkoutPlayerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <AppHeader />
       <div className="container px-4 py-8 max-w-2xl">
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/workout">
@@ -112,7 +114,7 @@ export default function WorkoutPlayerPage() {
             <CardContent className="space-y-6">
               <div className="text-center">
                 <p className="text-6xl font-bold text-orange-600 mb-2">{formatTime(timerSeconds)}</p>
-                <p className="text-muted-foreground">de {currentExercise.rest}s</p>
+                <p className="text-muted-foreground">de {currentExercise.restSeconds}s</p>
               </div>
 
               <div className="flex gap-2">
@@ -157,19 +159,22 @@ export default function WorkoutPlayerPage() {
                   <p className="text-sm text-muted-foreground">Repeticiones</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted/50">
-                  <p className="text-3xl font-bold">{currentExercise.rest}s</p>
+                  <p className="text-3xl font-bold">{currentExercise.restSeconds}s</p>
                   <p className="text-sm text-muted-foreground">Descanso</p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Notas:</p>
-                <p className="text-sm text-muted-foreground">{currentExercise.notes}</p>
-              </div>
+              {currentExercise.notes && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Notas:</p>
+                  <p className="text-sm text-muted-foreground">{currentExercise.notes}</p>
+                </div>
+              )}
 
               <div className="flex gap-2">
-                <Badge variant="outline">{currentExercise.muscleGroups.join(", ")}</Badge>
-                <Badge variant="outline">{currentExercise.equipment.join(", ")}</Badge>
+                <Badge variant="outline">{currentExercise.muscleGroup}</Badge>
+                <Badge variant="outline">{currentExercise.equipment}</Badge>
+                <Badge variant="outline" className="capitalize">{currentExercise.intensity}</Badge>
               </div>
 
               <Button onClick={handleNextSet} className="w-full" size="lg">

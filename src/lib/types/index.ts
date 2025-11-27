@@ -1,61 +1,54 @@
 // Types & Interfaces
 export type Gender = "male" | "female" | "other"
-export type Objective = "bulk" | "cut" | "definition" | "maintenance"
-export type EquipmentType = "gym" | "home" | "minimal"
+export type FitnessGoal = "lose_fat" | "gain_muscle" | "maintenance" | "recomposition"
+export type ExperienceLevel = "beginner" | "intermediate" | "advanced"
 export type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+export type Intensity = "low" | "medium" | "high"
 
 export interface User {
   id: string
   email: string
-  name: string
-  createdAt: Date
+  name?: string | null
 }
 
 export interface Profile {
-  id: string
-  userId: string
-  weight: number // kg
-  height: number // cm
-  age: number
-  gender: Gender
-  objective: Objective
-  equipment: EquipmentType[]
-  injuries: string
-  availableMinutesPerDay: number
-  createdAt: Date
-  updatedAt: Date
+  age: number | null
+  gender: "male" | "female" | "other" | null
+  heightCm: number | null
+  weightKg: number | null
+  experienceLevel: "beginner" | "intermediate" | "advanced" | null
+  fitnessGoal: "lose_fat" | "gain_muscle" | "maintenance" | "recomposition" | null
+  availableEquipment: string[]
+  injuries: string[]
+  workoutDaysPerWeek: number | null
+  minutesPerSession: number | null
 }
 
 export interface Exercise {
-  id: string
   name: string
+  muscleGroup: string
   sets: number
-  reps: string // e.g., "8-12" or "60 seconds"
-  rest: number // seconds
+  reps: string // e.g., "8-10", "12-15"
+  restSeconds: number
+  equipment: string
+  intensity: "low" | "medium" | "high"
   notes?: string
-  difficulty: "beginner" | "intermediate" | "advanced"
-  equipment: string[]
-  muscleGroups: string[]
 }
 
-export interface DayRoutine {
+export interface RoutineDay {
   id: string
-  routineId: string
-  day: DayOfWeek
-  title: string
+  dayOfWeek: "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+  position: number
+  focus: string
   exercises: Exercise[]
-  totalDuration: number // minutes
-  focus: string // e.g., "Upper Body", "Legs", "Rest"
 }
 
 export interface Routine {
   id: string
-  userId: string
-  weekNumber: number
-  goal: Objective
-  days: DayRoutine[]
-  aiVersion: string
-  createdAt: Date
+  title: string
+  description: string
+  goal: "lose_fat" | "gain_muscle" | "maintenance" | "recomposition"
+  days: RoutineDay[]
 }
 
 export interface Meal {

@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
+import { AppHeader } from "@/components/layout/app-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,7 +11,7 @@ import { Play, ChevronLeft } from "lucide-react"
 export default function WorkoutPage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
-  const { routine, isLoading, fetchLatestRoutine } = useRoutine()
+  const { routine, isLoading, fetchCurrentRoutine } = useRoutine()
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -20,7 +21,7 @@ export default function WorkoutPage() {
 
   useEffect(() => {
     if (user) {
-      fetchLatestRoutine()
+      fetchCurrentRoutine()
     }
   }, [user])
 
@@ -36,6 +37,7 @@ export default function WorkoutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <AppHeader />
       <div className="container px-4 py-8 max-w-4xl">
         <Button variant="ghost" asChild className="mb-6">
           <Link to="/dashboard">
@@ -55,7 +57,7 @@ export default function WorkoutPage() {
               <CardHeader className="bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-xl">{dayRoutine.day}</CardTitle>
+                    <CardTitle className="text-xl capitalize">{dayRoutine.dayOfWeek}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">{dayRoutine.focus}</p>
                   </div>
                   <Badge variant="secondary">{dayRoutine.exercises.length} ejercicios</Badge>
@@ -64,7 +66,7 @@ export default function WorkoutPage() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   {dayRoutine.exercises.map((exercise, exIndex) => (
-                    <div key={exercise.id} className="flex items-start gap-4 pb-4 border-b last:border-0">
+                    <div key={exIndex} className="flex items-start gap-4 pb-4 border-b last:border-0">
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-500/10 text-orange-600 font-semibold text-sm flex-shrink-0">
                         {exIndex + 1}
                       </div>
@@ -75,15 +77,20 @@ export default function WorkoutPage() {
                             {exercise.sets} series × {exercise.reps} reps
                           </span>
                           <span>•</span>
-                          <span>{exercise.rest}s descanso</span>
+                          <span>{exercise.restSeconds}s descanso</span>
                         </div>
-                        <p className="text-sm text-muted-foreground">{exercise.notes}</p>
+                        {exercise.notes && (
+                          <p className="text-sm text-muted-foreground">{exercise.notes}</p>
+                        )}
                         <div className="flex gap-2 mt-2">
                           <Badge variant="outline" className="text-xs">
-                            {exercise.muscleGroups.join(", ")}
+                            {exercise.muscleGroup}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
-                            {exercise.equipment.join(", ")}
+                            {exercise.equipment}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {exercise.intensity}
                           </Badge>
                         </div>
                       </div>
@@ -92,7 +99,7 @@ export default function WorkoutPage() {
                 </div>
 
                 <Button className="w-full mt-6" size="lg" asChild>
-                  <Link to={`/workout/player?day=${dayRoutine.day}`}>
+                  <Link to={`/workout/player?day=${dayRoutine.dayOfWeek}`}>
                     <Play className="mr-2 h-4 w-4" />
                     Iniciar Entrenamiento
                   </Link>

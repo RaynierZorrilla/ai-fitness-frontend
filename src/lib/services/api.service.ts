@@ -1,16 +1,28 @@
 // API Service - All HTTP calls
-import { mockUser, mockRoutine, mockNutritionPlan, mockProgress } from "./mock-data"
+import type { User, Profile, Routine } from "@/lib/types"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
-const USE_MOCK = !import.meta.env.VITE_API_URL // Usar mock si no hay URL de backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
+
+interface ApiError {
+  statusCode: number
+  message: string
+}
+
+interface AuthResponse {
+  user: User
+  token: string
+}
+
+interface ProfileResponse {
+  profile: Profile
+}
+
+interface RoutineResponse {
+  routine: Routine | null
+}
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    if (USE_MOCK) {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      return this.getMockResponse(endpoint, options.method || "GET") as T
-    }
-
     const token = localStorage.getItem("authToken")
 
     const config: RequestInit = {
@@ -25,124 +37,58 @@ class ApiService {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || "Request failed")
+      const error: ApiError = await response.json().catch(() => ({
+        statusCode: response.status,
+        message: "Request failed",
+      }))
+      throw new Error(error.message || `Request failed with status ${response.status}`)
     }
 
     return response.json()
   }
 
-  private getMockResponse(endpoint: string, method: string): any {
-    console.log("[v0] Mock API call:", method, endpoint)
-
-    // Auth endpoints
-    if (endpoint === "/auth/login" && method === "POST") {
-      localStorage.setItem("authToken", "mock-token-123")
-      return { user: mockUser, token: "mock-token-123" }
-    }
-    if (endpoint === "/auth/register" && method === "POST") {
-      localStorage.setItem("authToken", "mock-token-123")
-      return { user: mockUser, token: "mock-token-123" }
-    }
-    if (endpoint === "/auth/me") {
-      return { user: mockUser }
-    }
-
-    // Profile endpoints
-    if (endpoint === "/profile") {
-      if (method === "PUT") {
-        return { success: true, profile: mockUser.profile }
-      }
-      return { profile: mockUser.profile }
-    }
-
-    // Routine endpoints
-    if (endpoint === "/routine/generate" && method === "POST") {
-      return { routine: mockRoutine }
-    }
-    if (endpoint === "/routine/latest") {
-      return { routine: mockRoutine }
-    }
-    if (endpoint.startsWith("/routine/day/")) {
-      const day = endpoint.split("/").pop()
-      const dayData = mockRoutine.weekPlan.find((d) => d.day.toLowerCase() === day?.toLowerCase())
-      return { day: dayData }
-    }
-    if (endpoint === "/routine/progress" && method === "POST") {
-      return { success: true }
-    }
-
-    // Nutrition endpoints
-    if (endpoint === "/nutrition/generate" && method === "POST") {
-      return { nutrition: mockNutritionPlan }
-    }
-    if (endpoint === "/nutrition/today") {
-      return { nutrition: mockNutritionPlan }
-    }
-
-    // Progress endpoints
-    if (endpoint === "/progress/measurements" && method === "POST") {
-      return { success: true }
-    }
-    if (endpoint === "/progress/summary") {
-      return { progress: mockProgress }
-    }
-
-    return { error: "Mock endpoint not found" }
-  }
-
   // Auth
-  async login(email: string, password: string) {
-    return this.request("/auth/login", {
+  async login(email: string, password: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     })
   }
 
-  async register(email: string, password: string, name: string) {
-    return this.request("/auth/register", {
+  async register(email: string, password: string, name?: string): Promise<AuthResponse> {
+    return this.request<AuthResponse>("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, ...(name && { name }) }),
     })
   }
 
-  async getMe() {
-    return this.request("/auth/me")
+  async getMe(): Promise<{ user: User }> {
+    return this.request<{ user: User }>("/auth/me")
   }
 
   // Profile
-  async getProfile() {
-    return this.request("/profile")
+  async getProfile(): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>("/profile")
   }
 
-  async updateProfile(data: any) {
-    return this.request("/profile", {
+  async updateProfile(data: Partial<Profile>): Promise<ProfileResponse> {
+    return this.request<ProfileResponse>("/profile", {
       method: "PUT",
       body: JSON.stringify(data),
     })
   }
 
   // Routine
-  async generateRoutine(profileData: any) {
-    return this.request("/routine/generate", {
+  async generateRoutine(): Promise<RoutineResponse> {
+    // El backend usa el perfil del usuario autenticado, no requiere body
+    return this.request<RoutineResponse>("/routines/generate", {
       method: "POST",
-      body: JSON.stringify(profileData),
+      body: JSON.stringify({}),
     })
   }
 
-  async getLatestRoutine() {
-    return this.request("/routine/latest")
-  }
-
-  async getDayRoutine(day: string) {
-    return this.request(`/routine/day/${day}`)
-  }
-
-  async logProgress(exerciseData: any) {
-    return this.request("/routine/progress", {
-      method: "POST",
-      body: JSON.stringify(exerciseData),
-    })
+  async getCurrentRoutine(): Promise<RoutineResponse> {
+    return this.request<RoutineResponse>("/routines/current")
   }
 
   // Nutrition
