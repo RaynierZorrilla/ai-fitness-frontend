@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider'
 import HomePage from '@/pages/Home'
 import LoginPage from '@/pages/auth/Login'
 import RegisterPage from '@/pages/auth/Register'
+import OnboardingPage from '@/pages/Onboarding'
 import DashboardPage from '@/pages/Dashboard'
 import ProfilePage from '@/pages/Profile'
 import WorkoutPage from '@/pages/workout/Workout'
@@ -19,6 +20,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/workout" element={<WorkoutPage />} />
