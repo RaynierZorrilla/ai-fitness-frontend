@@ -25,6 +25,7 @@ function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/generate" element={<GeneratePage />} />
+        <Route path="/routine" element={<WorkoutPage />} />
         <Route path="/workout" element={<WorkoutPage />} />
         <Route path="/workout/player" element={<WorkoutPlayerPage />} />
         <Route path="/nutrition" element={<NutritionPage />} />
