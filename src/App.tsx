@@ -9,6 +9,7 @@ import RegisterPage from '@/pages/auth/Register'
 import OnboardingPage from '@/pages/Onboarding'
 import DashboardPage from '@/pages/Dashboard'
 import ProfilePage from '@/pages/Profile'
+import GeneratePage from '@/pages/Generate'
 import WorkoutPage from '@/pages/workout/Workout'
 import WorkoutPlayerPage from '@/pages/workout/WorkoutPlayer'
 import NutritionPage from '@/pages/Nutrition'
@@ -23,6 +24,7 @@ function App() {
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/generate" element={<GeneratePage />} />
         <Route path="/workout" element={<WorkoutPage />} />
         <Route path="/workout/player" element={<WorkoutPlayerPage />} />
         <Route path="/nutrition" element={<NutritionPage />} />
