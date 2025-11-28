@@ -1,16 +1,16 @@
 // Workout Store
 import { create } from "zustand"
-import type { Routine, DayRoutine, WorkoutSession } from "@/lib/types"
+import type { Routine, RoutineDay, WorkoutSession } from "@/lib/types"
 
 interface WorkoutState {
   currentRoutine: Routine | null
-  todayRoutine: DayRoutine | null
+  todayRoutine: RoutineDay | null
   activeSession: WorkoutSession | null
   currentExerciseIndex: number
   isTimerRunning: boolean
   timerSeconds: number
   setCurrentRoutine: (routine: Routine) => void
-  setTodayRoutine: (routine: DayRoutine) => void
+  setTodayRoutine: (routine: RoutineDay) => void
   startSession: (session: WorkoutSession) => void
   endSession: () => void
   nextExercise: () => void

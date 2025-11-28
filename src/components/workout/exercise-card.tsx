@@ -21,25 +21,24 @@ export function ExerciseCard({ exercise, index }: ExerciseCardProps) {
               <CardTitle className="text-lg">{exercise.name}</CardTitle>
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
-              {exercise.muscleGroups.map((muscle) => (
-                <Badge key={muscle} variant="secondary" className="text-xs">
-                  {muscle}
-                </Badge>
-              ))}
+              <Badge variant="secondary" className="text-xs">
+                {exercise.muscleGroup}
+              </Badge>
             </div>
           </div>
           <Badge
             variant={
-              exercise.difficulty === "beginner"
+              exercise.intensity === "low"
                 ? "default"
-                : exercise.difficulty === "intermediate"
+                : exercise.intensity === "medium"
                   ? "secondary"
                   : "destructive"
             }
+            className="capitalize"
           >
-            {exercise.difficulty === "beginner" && "Principiante"}
-            {exercise.difficulty === "intermediate" && "Intermedio"}
-            {exercise.difficulty === "advanced" && "Avanzado"}
+            {exercise.intensity === "low" && "Baja"}
+            {exercise.intensity === "medium" && "Media"}
+            {exercise.intensity === "high" && "Alta"}
           </Badge>
         </div>
       </CardHeader>
@@ -63,7 +62,7 @@ export function ExerciseCard({ exercise, index }: ExerciseCardProps) {
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Descanso</p>
-              <p className="text-sm font-semibold">{exercise.rest}s</p>
+              <p className="text-sm font-semibold">{exercise.restSeconds}s</p>
             </div>
           </div>
         </div>
@@ -72,14 +71,12 @@ export function ExerciseCard({ exercise, index }: ExerciseCardProps) {
             <p className="text-sm text-muted-foreground">{exercise.notes}</p>
           </div>
         )}
-        {exercise.equipment.length > 0 && (
+        {exercise.equipment && (
           <div className="flex flex-wrap gap-1">
             <span className="text-xs text-muted-foreground">Equipo:</span>
-            {exercise.equipment.map((eq) => (
-              <Badge key={eq} variant="outline" className="text-xs">
-                {eq}
-              </Badge>
-            ))}
+            <Badge variant="outline" className="text-xs">
+              {exercise.equipment}
+            </Badge>
           </div>
         )}
       </CardContent>
