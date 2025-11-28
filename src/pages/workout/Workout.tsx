@@ -1,17 +1,22 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
+import { useProfile } from "@/hooks/use-profile"
 import { AppHeader } from "@/components/layout/app-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ProfileIncompleteModal } from "@/components/profile-incomplete-modal"
+import { isProfileComplete } from "@/lib/utils"
 import { Play, ChevronLeft } from "lucide-react"
 
 export default function WorkoutPage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
   const { routine, isLoading, fetchCurrentRoutine } = useRoutine()
+  const { profile, isLoading: profileLoading } = useProfile()
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -25,7 +30,14 @@ export default function WorkoutPage() {
     }
   }, [user])
 
-  if (authLoading || isLoading) {
+  // Verificar si el perfil está completo cuando se carga la página
+  useEffect(() => {
+    if (!profileLoading && profile && !isProfileComplete(profile)) {
+      setShowProfileModal(true)
+    }
+  }, [profile, profileLoading])
+
+  if (authLoading || isLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Cargando rutina...</p>
@@ -33,10 +45,33 @@ export default function WorkoutPage() {
     )
   }
 
-  if (!user || !routine) return null
+
+  if (!user) return null
+
+  if (!routine && profile && !isProfileComplete(profile)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        <AppHeader />
+        <div className="container px-4 py-8 max-w-4xl">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <ProfileIncompleteModal
+              open={showProfileModal}
+              onOpenChange={setShowProfileModal}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!routine) return null
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <ProfileIncompleteModal
+        open={showProfileModal}
+        onOpenChange={setShowProfileModal}
+      />
       <AppHeader />
       <div className="container px-4 py-8 max-w-4xl">
         <Button variant="ghost" asChild className="mb-6">

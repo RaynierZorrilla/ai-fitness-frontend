@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
+import { useProfile } from "@/hooks/use-profile"
+import { ProfileIncompleteModal } from "@/components/profile-incomplete-modal"
+import { isProfileComplete } from "@/lib/utils"
 import { Sparkles, Loader2, ArrowRight, CheckCircle2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -12,8 +15,10 @@ export default function GeneratePage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
   const { generateRoutine, isLoading } = useRoutine()
+  const { profile, isLoading: profileLoading } = useProfile()
   const [isGenerating, setIsGenerating] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
+  const [showProfileModal, setShowProfileModal] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -21,7 +26,20 @@ export default function GeneratePage() {
     }
   }, [user, authLoading, navigate])
 
+  // Verificar si el perfil está completo cuando se carga la página
+  useEffect(() => {
+    if (!profileLoading && profile && !isProfileComplete(profile)) {
+      setShowProfileModal(true)
+    }
+  }, [profile, profileLoading])
+
   const handleGenerate = async () => {
+    // Verificar si el perfil está completo antes de generar
+    if (!profile || !isProfileComplete(profile)) {
+      setShowProfileModal(true)
+      return
+    }
+
     setIsGenerating(true)
     setIsComplete(false)
 
@@ -30,7 +48,6 @@ export default function GeneratePage() {
       if (result.success) {
         setIsComplete(true)
         toast.success("¡Rutina generada exitosamente!")
-        // Redirigir después de 2 segundos
         setTimeout(() => {
           navigate("/workout")
         }, 2000)
@@ -44,7 +61,7 @@ export default function GeneratePage() {
     }
   }
 
-  if (authLoading) {
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen gradient-mesh flex items-center justify-center">
         <div className="fixed inset-0 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 bg-gradient-to-br from-slate-50 via-white to-slate-100 -z-10" />
@@ -57,8 +74,12 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen gradient-mesh">
-      {/* Fondo degradado - cambia según el tema */}
       <div className="fixed inset-0 dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 bg-gradient-to-br from-slate-50 via-white to-slate-100 -z-10" />
+
+      <ProfileIncompleteModal
+        open={showProfileModal}
+        onOpenChange={setShowProfileModal}
+      />
 
       <AppHeader />
       <div className="container px-4 py-8 max-w-3xl">
