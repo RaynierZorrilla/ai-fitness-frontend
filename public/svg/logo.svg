@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            .primary-color { fill: #ff5400; }
+            .primary-stroke { stroke: #ff5400; }
+        </style>
+        
+        <linearGradient id="tech-gradient" x1="100" y1="500" x2="412" y2="12">
+            <stop offset="0%" stop-color="#ff5400" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#ff5400"/>
+        </linearGradient>
+    </defs>
+    
+    <g transform="translate(31, 31) scale(0.88)">
+        <path d="M150 450 C 50 450, 50 350, 100 250 C 130 190, 200 150, 250 150 C 300 150, 370 190, 400 250 C 450 350, 450 450, 350 450 L 150 450 Z" 
+              fill="url(#tech-gradient)" />
+              
+        <g class="primary-color">
+            <circle cx="250" cy="80" r="40" />
+            <circle cx="140" cy="180" r="30" />
+            <circle cx="360" cy="180" r="30" />
+            <circle cx="250" cy="0" r="25" />
+        </g>
+
+         <g class="primary-stroke" stroke-width="15" stroke-linecap="round">
+             <path d="M250 80 L 140 180" />
+             <path d="M250 80 L 360 180" />
+             <path d="M250 80 L 250 150" />
+             <path d="M250 25 L 250 55" stroke-width="12"/>
+        </g>
+        
+        <circle cx="250" cy="320" r="50" fill="#ffffff" opacity="0.9"/>
+        <circle cx="250" cy="320" r="35" class="primary-color"/>
+    </g>
+</svg>
