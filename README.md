@@ -64,7 +64,7 @@ La aplicación funcionará con datos mock automáticamente.
 1. Crear archivo `.env.local`:
 
 \`\`\`bash
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+VITE_API_URL=http://localhost:8000/api
 \`\`\`
 
 2. Iniciar desarrollo:

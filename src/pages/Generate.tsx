@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { AppHeader } from "@/components/layout/app-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
 import { useProfile } from "@/hooks/use-profile"
@@ -19,6 +20,7 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -36,12 +38,14 @@ export default function GeneratePage() {
   const handleGenerate = async () => {
     // Verificar si el perfil está completo antes de generar
     if (!profile || !isProfileComplete(profile)) {
+      setGenerateError("Completa tu perfil antes de generar una rutina.")
       setShowProfileModal(true)
       return
     }
 
     setIsGenerating(true)
     setIsComplete(false)
+    setGenerateError(null)
 
     try {
       const result = await generateRoutine()
@@ -52,11 +56,15 @@ export default function GeneratePage() {
           navigate("/workout")
         }, 2000)
       } else {
-        toast.error(result.error || "Error al generar la rutina")
+        const message = result.error || "Error al generar la rutina"
+        setGenerateError(message)
+        toast.error(message)
         setIsGenerating(false)
       }
     } catch (error: any) {
-      toast.error(error.message || "Error al generar la rutina")
+      const message = error.message || "Error al generar la rutina"
+      setGenerateError(message)
+      toast.error(message)
       setIsGenerating(false)
     }
   }
@@ -79,6 +87,7 @@ export default function GeneratePage() {
       <ProfileIncompleteModal
         open={showProfileModal}
         onOpenChange={setShowProfileModal}
+        targetPath={profile ? "/profile" : "/onboarding"}
       />
 
       <AppHeader />
@@ -105,6 +114,13 @@ export default function GeneratePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {generateError && (
+              <Alert variant="destructive">
+                <AlertTitle>No se pudo generar la rutina</AlertTitle>
+                <AlertDescription>{generateError}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0 mt-1">
@@ -163,7 +179,17 @@ export default function GeneratePage() {
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="space-y-5">
+                  {(isGenerating || isLoading) && (
+                    <div className="rounded-lg border bg-muted/30 p-4 text-center">
+                      <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-orange-500" />
+                      <p className="font-medium dark:text-white text-slate-900">Generando tu rutina con IA</p>
+                      <p className="text-sm dark:text-white/70 text-slate-700">
+                        Esto puede tardar unos segundos mientras se analiza tu perfil y se construye el plan.
+                      </p>
+                    </div>
+                  )}
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Button
                     onClick={handleGenerate}
                     disabled={isGenerating || isLoading}
@@ -191,6 +217,7 @@ export default function GeneratePage() {
                   >
                     Cancelar
                   </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -207,4 +234,3 @@ export default function GeneratePage() {
     </div>
   )
 }
-

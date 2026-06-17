@@ -13,17 +13,19 @@ import { User } from "lucide-react"
 interface ProfileIncompleteModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  targetPath?: "/profile" | "/onboarding"
 }
 
 export function ProfileIncompleteModal({
   open,
   onOpenChange,
+  targetPath = "/profile",
 }: ProfileIncompleteModalProps) {
   const navigate = useNavigate()
 
   const handleGoToProfile = () => {
     onOpenChange(false)
-    navigate("/profile")
+    navigate(targetPath)
   }
 
   const handleLater = () => {
@@ -66,4 +68,3 @@ export function ProfileIncompleteModal({
     </Dialog>
   )
 }
-

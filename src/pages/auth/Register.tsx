@@ -26,8 +26,13 @@ export default function RegisterPage() {
       return
     }
 
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres")
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Ingresa un email válido")
+      return
+    }
+
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres")
       return
     }
 
@@ -124,4 +129,3 @@ export default function RegisterPage() {
     </div>
   )
 }
-

@@ -31,7 +31,7 @@ export function useAuth() {
       setToken(response.token)
       setUser(response.user)
     } catch (error: any) {
-      throw new Error(error.message || "Error al iniciar sesión")
+      throw new Error(error.message || "No se pudo iniciar sesión")
     } finally {
       setLoading(false)
     }
@@ -44,7 +44,7 @@ export function useAuth() {
       setToken(response.token)
       setUser(response.user)
     } catch (error: any) {
-      throw new Error(error.message || "Error al registrarse")
+      throw new Error(error.message || "No se pudo crear la cuenta")
     } finally {
       setLoading(false)
     }
@@ -57,5 +57,6 @@ export function useAuth() {
     login,
     register,
     logout,
+    verifyAuth,
   }
 }

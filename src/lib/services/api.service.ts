@@ -1,7 +1,32 @@
 // API Service - All HTTP calls
-import type { User, Profile, Routine } from "@/lib/types"
+import type {
+  CreateProgressEntryInput,
+  CreateProgressResponse,
+  CreateWorkoutSessionInput,
+  Profile,
+  ProgressHistoryResponse,
+  ProgressLatestResponse,
+  Routine,
+  RoutineDetailResponse,
+  RoutineHistoryResponse,
+  User,
+  WorkoutSessionRecord,
+  WorkoutSummaryStats,
+} from "@/lib/types"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
+
+export class ApiServiceError extends Error {
+  statusCode?: number
+  code?: string
+
+  constructor(message: string, statusCode?: number, code?: string) {
+    super(message)
+    this.name = "ApiServiceError"
+    this.statusCode = statusCode
+    this.code = code
+  }
+}
 
 interface ApiError {
   statusCode: number
@@ -21,8 +46,49 @@ interface RoutineResponse {
   routine: Routine | null
 }
 
+interface WorkoutSessionResponse {
+  session: WorkoutSessionRecord
+}
+
+interface WorkoutHistoryResponse {
+  sessions: WorkoutSessionRecord[]
+}
+
 class ApiService {
+  workouts = {
+    createSession: (data: CreateWorkoutSessionInput): Promise<WorkoutSessionResponse> =>
+      this.request<WorkoutSessionResponse>("/workouts/sessions", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    getSummary: (): Promise<WorkoutSummaryStats> => this.request<WorkoutSummaryStats>("/workouts/summary"),
+    getHistory: (): Promise<WorkoutHistoryResponse> => this.request<WorkoutHistoryResponse>("/workouts/history"),
+  }
+
+  progress = {
+    create: (data: CreateProgressEntryInput): Promise<CreateProgressResponse> =>
+      this.request<CreateProgressResponse>("/progress", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    getHistory: (): Promise<ProgressHistoryResponse> => this.request<ProgressHistoryResponse>("/progress/history"),
+    getLatest: (): Promise<ProgressLatestResponse> => this.request<ProgressLatestResponse>("/progress/latest"),
+  }
+
+  routines = {
+    getHistory: (): Promise<RoutineHistoryResponse> => this.request<RoutineHistoryResponse>("/routines/history"),
+    getById: (id: string): Promise<RoutineDetailResponse> => this.request<RoutineDetailResponse>(`/routines/${id}`),
+  }
+
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    if (!API_BASE_URL) {
+      throw new ApiServiceError(
+        "Falta configurar VITE_API_URL. Define la URL del backend en el archivo .env.",
+        undefined,
+        "missing_api_url",
+      )
+    }
+
     const token = localStorage.getItem("authToken")
 
     const config: RequestInit = {
@@ -34,17 +100,61 @@ class ApiService {
       },
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
+    let response: Response
+
+    try {
+      response = await fetch(`${API_BASE_URL}${endpoint}`, config)
+    } catch {
+      throw new ApiServiceError(
+        "No se pudo conectar con el backend. Verifica que el servidor esté encendido.",
+        undefined,
+        "network_error",
+      )
+    }
 
     if (!response.ok) {
       const error: ApiError = await response.json().catch(() => ({
         statusCode: response.status,
         message: "Request failed",
       }))
-      throw new Error(error.message || `Request failed with status ${response.status}`)
+
+      if (response.status === 401 && endpoint !== "/auth/login" && endpoint !== "/auth/register") {
+        window.dispatchEvent(new Event("auth:unauthorized"))
+      }
+
+      throw new ApiServiceError(
+        this.normalizeErrorMessage(error.message, response.status, endpoint),
+        response.status,
+        this.getErrorCode(error.message, response.status),
+      )
     }
 
     return response.json()
+  }
+
+  private normalizeErrorMessage(message: string, status: number, endpoint: string) {
+    const normalized = message?.toLowerCase() || ""
+
+    if (status === 401) return "Tu sesión expiró. Inicia sesión nuevamente."
+    if (status === 409 || normalized.includes("already") || normalized.includes("existe")) {
+      return "Este email ya está registrado."
+    }
+    if (normalized.includes("cohere")) return "Cohere no pudo generar la rutina en este momento."
+    if (status >= 500) return "El backend tuvo un error interno. Intenta nuevamente."
+    if (endpoint === "/routines/generate" && status === 400) return "Completa tu perfil antes de generar una rutina."
+
+    return message || `La solicitud falló con estado ${status}`
+  }
+
+  private getErrorCode(message: string, status: number) {
+    const normalized = message?.toLowerCase() || ""
+
+    if (status === 401) return "token_expired"
+    if (status === 409 || normalized.includes("already") || normalized.includes("existe")) return "email_exists"
+    if (normalized.includes("cohere")) return "cohere_error"
+    if (status >= 500) return "server_error"
+
+    return "request_error"
   }
 
   // Auth
@@ -105,14 +215,11 @@ class ApiService {
 
   // Progress
   async addMeasurement(data: any) {
-    return this.request("/progress/measurements", {
-      method: "POST",
-      body: JSON.stringify(data),
-    })
+    return this.progress.create(data)
   }
 
   async getProgressSummary() {
-    return this.request("/progress/summary")
+    return this.progress.getLatest()
   }
 }
 

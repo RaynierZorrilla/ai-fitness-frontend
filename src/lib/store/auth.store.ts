@@ -28,12 +28,19 @@ export const useAuthStore = create<AuthState>()(
       },
       logout: () => {
         localStorage.removeItem("authToken")
-        set({ user: null, token: null, isAuthenticated: false })
+        set({ user: null, token: null, isAuthenticated: false, isLoading: false })
       },
       setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
       name: "auth-storage",
+      onRehydrateStorage: () => (state) => {
+        if (state?.token) {
+          localStorage.setItem("authToken", state.token)
+        } else {
+          localStorage.removeItem("authToken")
+        }
+      },
     },
   ),
 )

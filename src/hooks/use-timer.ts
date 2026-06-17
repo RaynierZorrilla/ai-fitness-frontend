@@ -9,7 +9,13 @@ export function useTimer() {
 
     if (isTimerRunning) {
       interval = setInterval(() => {
-        setTimerSeconds(timerSeconds + 1)
+        if (timerSeconds <= 1) {
+          setTimerSeconds(0)
+          stopTimer()
+          return
+        }
+
+        setTimerSeconds(timerSeconds - 1)
       }, 1000)
     }
 
@@ -31,5 +37,6 @@ export function useTimer() {
     startTimer,
     stopTimer,
     resetTimer,
+    setTimerSeconds,
   }
 }

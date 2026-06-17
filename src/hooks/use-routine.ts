@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useWorkoutStore } from "@/lib/store/workout.store"
 import { apiService } from "@/lib/services/api.service"
+import { getTodayDayOfWeek } from "@/lib/days"
 import type { Routine, RoutineDay } from "@/lib/types"
 
 export function useRoutine() {
@@ -48,10 +49,8 @@ export function useRoutine() {
   const getTodayRoutine = (routine: Routine | null): RoutineDay | null => {
     if (!routine) return null
     
-    const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()
-    const dayRoutine = routine.days.find(
-      (day) => day.dayOfWeek.toLowerCase() === today
-    )
+    const today = getTodayDayOfWeek()
+    const dayRoutine = routine.days.find((day) => day.dayOfWeek === today)
     
     if (dayRoutine) {
       setTodayRoutine(dayRoutine)

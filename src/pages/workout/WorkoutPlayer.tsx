@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useSearchParams, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { isDayOfWeek } from "@/lib/days"
 import { ChevronLeft, Play, Pause, SkipForward, Check } from "lucide-react"
 
 export default function WorkoutPlayerPage() {
@@ -16,11 +17,13 @@ export default function WorkoutPlayerPage() {
   const day = searchParams.get("day")
   const { user, isLoading: authLoading } = useAuth()
   const { routine, isLoading, fetchCurrentRoutine } = useRoutine()
-  const { timerSeconds, isTimerRunning, startTimer, stopTimer, resetTimer } = useTimer()
+  const { timerSeconds, isTimerRunning, startTimer, stopTimer, resetTimer, setTimerSeconds } = useTimer()
 
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
   const [currentSet, setCurrentSet] = useState(1)
   const [isResting, setIsResting] = useState(false)
+  const [completedSets, setCompletedSets] = useState(0)
+  const [startedAt] = useState(() => Date.now())
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -34,6 +37,24 @@ export default function WorkoutPlayerPage() {
     }
   }, [user])
 
+  const dayWorkout = useMemo(() => {
+    if (!routine || !isDayOfWeek(day)) return null
+    return routine.days.find((routineDay) => routineDay.dayOfWeek === day) || null
+  }, [routine, day])
+
+  useEffect(() => {
+    if (!authLoading && !isLoading && (!user || !routine || !isDayOfWeek(day) || !dayWorkout)) {
+      navigate("/workout")
+    }
+  }, [authLoading, isLoading, user, routine, day, dayWorkout, navigate])
+
+  useEffect(() => {
+    if (isResting && timerSeconds === 0 && !isTimerRunning) {
+      setIsResting(false)
+      resetTimer()
+    }
+  }, [isResting, timerSeconds, isTimerRunning, resetTimer])
+
   if (authLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -42,26 +63,18 @@ export default function WorkoutPlayerPage() {
     )
   }
 
-  if (!user || !routine || !day) {
-    navigate("/workout")
-    return null
-  }
-
-  const dayWorkout = routine.days.find((d) => d.dayOfWeek.toLowerCase() === day?.toLowerCase())
-
-  if (!dayWorkout) {
-    navigate("/workout")
-    return null
-  }
+  if (!user || !routine || !dayWorkout) return null
 
   const currentExercise = dayWorkout.exercises[currentExerciseIndex]
   const progress = ((currentExerciseIndex + 1) / dayWorkout.exercises.length) * 100
 
   const handleNextSet = () => {
+    setCompletedSets((sets) => sets + 1)
+
     if (currentSet < currentExercise.sets) {
       setCurrentSet(currentSet + 1)
       setIsResting(true)
-      resetTimer()
+      setTimerSeconds(currentExercise.restSeconds)
       startTimer()
     } else {
       handleNextExercise()
@@ -75,6 +88,24 @@ export default function WorkoutPlayerPage() {
       setIsResting(false)
       resetTimer()
     } else {
+      const totalSeconds = Math.max(1, Math.round((Date.now() - startedAt) / 1000))
+      const totalSets = completedSets + 1
+
+      sessionStorage.setItem(
+        "lastWorkoutSummary",
+        JSON.stringify({
+          routineId: routine.id,
+          dayId: dayWorkout.id,
+          dayOfWeek: dayWorkout.dayOfWeek,
+          focus: dayWorkout.focus,
+          totalSeconds,
+          completedExercises: dayWorkout.exercises.length,
+          completedSets: totalSets,
+          estimatedCalories: totalSets * 8,
+          completedAt: new Date().toISOString(),
+        }),
+      )
+      stopTimer()
       navigate("/workout/complete")
     }
   }
@@ -114,7 +145,7 @@ export default function WorkoutPlayerPage() {
             <CardContent className="space-y-6">
               <div className="text-center">
                 <p className="text-6xl font-bold text-orange-600 mb-2">{formatTime(timerSeconds)}</p>
-                <p className="text-muted-foreground">de {currentExercise.restSeconds}s</p>
+                <p className="text-muted-foreground">descanso recomendado</p>
               </div>
 
               <div className="flex gap-2">
@@ -195,4 +226,3 @@ export default function WorkoutPlayerPage() {
     </div>
   )
 }
-

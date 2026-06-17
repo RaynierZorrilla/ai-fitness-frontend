@@ -1,14 +1,41 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { AppHeader } from "@/components/layout/app-header"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
-import { Dumbbell, Apple, TrendingUp, Calendar, Play, Sparkles } from "lucide-react"
+import { DAY_LABELS, getTodayDayOfWeek } from "@/lib/days"
+import { apiService } from "@/lib/services/api.service"
+import type { ProgressEntry, WorkoutSummaryStats } from "@/lib/types"
+import { Dumbbell, Apple, TrendingUp, Calendar, Play, Sparkles, Clock, Scale, Ruler } from "lucide-react"
+
+const emptyWorkoutSummary: WorkoutSummaryStats = {
+  totalSessions: 0,
+  currentWeekSessions: 0,
+  totalCalories: 0,
+  totalWorkoutTimeMinutes: 0,
+}
+
+function formatProgressDate(value: string) {
+  return new Intl.DateTimeFormat("es", {
+    day: "2-digit",
+    month: "long",
+  }).format(new Date(value))
+}
+
+function formatDashboardWeight(weightKg: number | null) {
+  if (weightKg === null) return "Sin dato"
+
+  return `${(weightKg * 2.20462).toFixed(1)} lb / ${weightKg.toFixed(1)} kg`
+}
 
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
   const { routine, fetchCurrentRoutine } = useRoutine()
+  const [workoutSummary, setWorkoutSummary] = useState<WorkoutSummaryStats>(emptyWorkoutSummary)
+  const [latestProgress, setLatestProgress] = useState<ProgressEntry | null>(null)
+  const [summaryError, setSummaryError] = useState<string | null>(null)
+  const [progressError, setProgressError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -19,6 +46,26 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       fetchCurrentRoutine()
+      apiService.workouts
+        .getSummary()
+        .then((summary) => {
+          setWorkoutSummary(summary)
+          setSummaryError(null)
+        })
+        .catch((error: Error) => {
+          setWorkoutSummary(emptyWorkoutSummary)
+          setSummaryError(error.message || "No se pudieron cargar las métricas.")
+        })
+      apiService.progress
+        .getLatest()
+        .then((response) => {
+          setLatestProgress(response.entry)
+          setProgressError(null)
+        })
+        .catch((error: Error) => {
+          setLatestProgress(null)
+          setProgressError(error.message || "No se pudo cargar el último progreso.")
+        })
     }
   }, [user])
 
@@ -32,8 +79,8 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase()
-  const todayWorkout = routine?.days?.find((dayRoutine) => dayRoutine.dayOfWeek.toLowerCase() === today)
+  const today = getTodayDayOfWeek()
+  const todayWorkout = routine?.days?.find((dayRoutine) => dayRoutine.dayOfWeek === today)
 
   return (
     <div className="min-h-screen gradient-mesh">
@@ -60,19 +107,27 @@ export default function DashboardPage() {
                 <p className="text-base font-medium dark:text-white/80 text-slate-700">{todayWorkout.focus}</p>
               </div>
               <Link
-                to="/workout"
+                to={`/workout/player?day=${todayWorkout.dayOfWeek}`}
                 className="bg-gradient-to-r from-orange-500 to-red-600 px-6 py-2 rounded-xl text-white font-medium hover:shadow-lg hover:shadow-orange-500/50 transition-all flex items-center gap-2"
               >
                 <Play className="h-4 w-4" />
                 Comenzar
               </Link>
             </div>
-            <p className="text-sm dark:text-white/60 text-slate-600">{todayWorkout.exercises.length} ejercicios programados</p>
+            <p className="text-sm dark:text-white/60 text-slate-600">
+              {DAY_LABELS[todayWorkout.dayOfWeek]} · {todayWorkout.exercises.length} ejercicios programados
+            </p>
           </div>
         )}
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
+        {summaryError && (
+          <div className="glass-card rounded-xl p-4 mb-6 border-red-500/30">
+            <p className="text-sm text-red-500">{summaryError}</p>
+          </div>
+        )}
+
+        <div className="grid md:grid-cols-4 gap-4 mb-6">
           <div className="glass-card rounded-xl p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -80,11 +135,11 @@ export default function DashboardPage() {
                   <Dumbbell className="w-5 h-5 text-orange-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm dark:text-white/60 text-slate-600">Entrenamientos</p>
-                  <p className="text-2xl font-bold dark:text-white text-slate-900">32</p>
+                  <p className="text-sm dark:text-white/60 text-slate-600">Sesiones</p>
+                  <p className="text-2xl font-bold dark:text-white text-slate-900">{workoutSummary.totalSessions}</p>
                 </div>
               </div>
-              <div className="text-xs text-orange-500 font-medium">Este mes</div>
+              <div className="text-xs text-orange-500 font-medium">Total</div>
             </div>
           </div>
 
@@ -95,11 +150,11 @@ export default function DashboardPage() {
                   <Apple className="w-5 h-5 text-red-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm dark:text-white/60 text-slate-600">Calorías</p>
-                  <p className="text-2xl font-bold dark:text-white text-slate-900">2,500</p>
+                  <p className="text-sm dark:text-white/60 text-slate-600">Esta semana</p>
+                  <p className="text-2xl font-bold dark:text-white text-slate-900">{workoutSummary.currentWeekSessions}</p>
                 </div>
               </div>
-              <div className="text-xs text-red-500 font-medium">Objetivo</div>
+              <div className="text-xs text-red-500 font-medium">Sesiones</div>
             </div>
           </div>
 
@@ -110,26 +165,83 @@ export default function DashboardPage() {
                   <TrendingUp className="w-5 h-5 text-green-500" />
                 </div>
                 <div className="text-left">
-                  <p className="text-sm dark:text-white/60 text-slate-600">Progreso</p>
-                  <p className="text-2xl font-bold dark:text-white text-slate-900">-2 kg</p>
+                  <p className="text-sm dark:text-white/60 text-slate-600">Calorías</p>
+                  <p className="text-2xl font-bold dark:text-white text-slate-900">{workoutSummary.totalCalories}</p>
                 </div>
               </div>
-              <div className="text-xs text-green-500 font-medium">30 días</div>
+              <div className="text-xs text-green-500 font-medium">Acumuladas</div>
             </div>
+          </div>
+
+          <div className="glass-card rounded-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-blue-500" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm dark:text-white/60 text-slate-600">Tiempo</p>
+                  <p className="text-2xl font-bold dark:text-white text-slate-900">
+                    {workoutSummary.totalWorkoutTimeMinutes}m
+                  </p>
+                </div>
+              </div>
+              <div className="text-xs text-blue-500 font-medium">Total</div>
+            </div>
+          </div>
+        </div>
+
+        {progressError && (
+          <div className="glass-card rounded-xl p-4 mb-6 border-red-500/30">
+            <p className="text-sm text-red-500">{progressError}</p>
+          </div>
+        )}
+
+        <div className="glass-strong rounded-2xl p-6 mb-6 border-green-500/20">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                <h2 className="text-xl font-semibold dark:text-white text-slate-900">Último progreso</h2>
+              </div>
+              {latestProgress ? (
+                <div className="grid sm:grid-cols-3 gap-3 text-sm dark:text-white/70 text-slate-700">
+                  <span className="flex items-center gap-2">
+                    <Scale className="h-4 w-4 text-green-500" />
+                    Peso: {formatDashboardWeight(latestProgress.weightKg)}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <Ruler className="h-4 w-4 text-blue-500" />
+                    Cintura: {latestProgress.waistCm !== null ? `${latestProgress.waistCm} cm` : "Sin dato"}
+                  </span>
+                  <span>Registrado: {formatProgressDate(latestProgress.recordedAt)}</span>
+                </div>
+              ) : (
+                <p className="text-sm dark:text-white/60 text-slate-600">
+                  Aún no tienes registros de progreso.
+                </p>
+              )}
+            </div>
+            <Link
+              to="/progress"
+              className="bg-gradient-to-r from-green-500 to-blue-600 px-6 py-2 rounded-xl text-white font-medium hover:shadow-lg hover:shadow-green-500/30 transition-all text-center"
+            >
+              Ver progreso
+            </Link>
           </div>
         </div>
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 gap-4">
           <Link
-            to="/routine"
+            to="/routines/history"
             className="glass-card rounded-xl p-6 hover:glass-strong transition-all cursor-pointer"
           >
             <div className="flex items-center gap-3 mb-2">
               <Dumbbell className="h-5 w-5 text-orange-500" />
-              <h3 className="text-lg font-semibold dark:text-white text-slate-900">Ver Rutina Completa</h3>
+              <h3 className="text-lg font-semibold dark:text-white text-slate-900">Historial de Rutinas</h3>
             </div>
-            <p className="dark:text-white/70 text-slate-700 text-sm">Revisa tu plan de entrenamiento semanal</p>
+            <p className="dark:text-white/70 text-slate-700 text-sm">Revisa tu rutina actual y planes anteriores</p>
           </Link>
 
           <Link
@@ -149,9 +261,9 @@ export default function DashboardPage() {
           >
             <div className="flex items-center gap-3 mb-2">
               <TrendingUp className="h-5 w-5 text-green-500" />
-              <h3 className="text-lg font-semibold dark:text-white text-slate-900">Seguimiento</h3>
+              <h3 className="text-lg font-semibold dark:text-white text-slate-900">Progreso</h3>
             </div>
-            <p className="dark:text-white/70 text-slate-700 text-sm">Visualiza tu evolución y estadísticas</p>
+            <p className="dark:text-white/70 text-slate-700 text-sm">Registra y revisa tus medidas corporales</p>
           </Link>
 
           <Link
@@ -169,4 +281,3 @@ export default function DashboardPage() {
     </div>
   )
 }
-

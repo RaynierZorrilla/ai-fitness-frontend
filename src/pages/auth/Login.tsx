@@ -11,13 +11,23 @@ import { Dumbbell, Loader2 } from "lucide-react"
 export default function LoginPage() {
   const navigate = useNavigate()
   const { login, isLoading } = useAuth()
-  const [email, setEmail] = useState("demo@fitness.com")
-  const [password, setPassword] = useState("demo123")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [error, setError] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Ingresa un email válido")
+      return
+    }
+
+    if (password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres")
+      return
+    }
 
     try {
       await login(email, password)
@@ -82,14 +92,9 @@ export default function LoginPage() {
                 Regístrate aquí
               </Link>
             </p>
-
-            <div className="pt-4 border-t">
-              <p className="text-xs text-center text-muted-foreground">Modo Demo: Usa las credenciales precargadas</p>
-            </div>
           </form>
         </CardContent>
       </Card>
     </div>
   )
 }
-

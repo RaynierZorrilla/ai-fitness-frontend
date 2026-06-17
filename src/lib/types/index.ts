@@ -51,6 +51,31 @@ export interface Routine {
   days: RoutineDay[]
 }
 
+export interface RoutineHistoryItem {
+  id: string
+  title: string
+  description: string
+  goal: FitnessGoal
+  isActive: boolean
+  createdAt: string
+  dayCount: number
+  exerciseCount: number
+}
+
+export interface RoutineHistoryResponse {
+  routines: RoutineHistoryItem[]
+}
+
+export interface RoutineDetailResponse {
+  routine: Routine & {
+    isActive: boolean
+    createdAt: string
+    updatedAt: string
+    dayCount: number
+    exerciseCount: number
+  }
+}
+
 export interface Meal {
   name: string
   time: string
@@ -111,4 +136,83 @@ export interface WorkoutSession {
   endTime?: Date
   completed: boolean
   exercises: ExerciseLog[]
+}
+
+export interface CompletedWorkoutSummary {
+  routineId: string
+  dayId: string
+  dayOfWeek: DayOfWeek
+  focus: string
+  totalSeconds: number
+  completedExercises: number
+  completedSets: number
+  estimatedCalories: number
+  completedAt: string
+}
+
+export interface CreateWorkoutSessionInput {
+  routineId: string
+  dayId: string
+  performedAt?: string
+  totalSeconds?: number
+  completedExercises?: number
+  completedSets?: number
+  estimatedCalories?: number
+  difficultyRating?: number | null
+}
+
+export interface WorkoutSessionRecord {
+  id: string
+  userId: string
+  routineId: string
+  dayId: string
+  performedAt: string
+  totalSeconds: number
+  completedExercises: number
+  completedSets: number
+  estimatedCalories: number
+  difficultyRating?: number | null
+}
+
+export interface WorkoutSummaryStats {
+  totalSessions: number
+  currentWeekSessions: number
+  totalCalories: number
+  totalWorkoutTimeMinutes: number
+}
+
+export interface ProgressEntry {
+  id: string
+  userId: string
+  weightKg: number | null
+  bodyFatPercentage: number | null
+  chestCm: number | null
+  waistCm: number | null
+  armsCm: number | null
+  legsCm: number | null
+  notes: string | null
+  recordedAt: string
+}
+
+export interface CreateProgressEntryInput {
+  weightKg?: number
+  bodyFatPercentage?: number
+  chestCm?: number
+  waistCm?: number
+  armsCm?: number
+  legsCm?: number
+  notes?: string
+  recordedAt?: string
+}
+
+export interface ProgressHistoryResponse {
+  entries: ProgressEntry[]
+}
+
+export interface ProgressLatestResponse {
+  entry: ProgressEntry | null
+}
+
+export interface CreateProgressResponse {
+  entry: ProgressEntry
 }

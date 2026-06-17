@@ -7,9 +7,11 @@ import { AppHeader } from "@/components/layout/app-header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { ProfileIncompleteModal } from "@/components/profile-incomplete-modal"
 import { isProfileComplete } from "@/lib/utils"
-import { Play, ChevronLeft } from "lucide-react"
+import { DAY_LABELS } from "@/lib/days"
+import { Play, ChevronLeft, Sparkles } from "lucide-react"
 
 export default function WorkoutPage() {
   const navigate = useNavigate()
@@ -64,7 +66,41 @@ export default function WorkoutPage() {
     )
   }
 
-  if (!routine) return null
+  if (!routine) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        <AppHeader />
+        <div className="container px-4 py-8 max-w-4xl">
+          <Button variant="ghost" asChild className="mb-6">
+            <Link to="/dashboard">
+              <ChevronLeft className="mr-2 h-4 w-4" />
+              Volver
+            </Link>
+          </Button>
+
+          <Empty className="min-h-[55vh]">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Sparkles className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle>Aún no tienes una rutina generada.</EmptyTitle>
+              <EmptyDescription>
+                Genera tu primera rutina personalizada para ver tus entrenamientos semanales.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link to="/generate">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Generar rutina
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
@@ -92,7 +128,7 @@ export default function WorkoutPage() {
               <CardHeader className="bg-muted/30">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-xl capitalize">{dayRoutine.dayOfWeek}</CardTitle>
+                    <CardTitle className="text-xl">{DAY_LABELS[dayRoutine.dayOfWeek]}</CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">{dayRoutine.focus}</p>
                   </div>
                   <Badge variant="secondary">{dayRoutine.exercises.length} ejercicios</Badge>
@@ -147,4 +183,3 @@ export default function WorkoutPage() {
     </div>
   )
 }
-
