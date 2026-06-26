@@ -87,7 +87,11 @@ export default function RoutineDetailPage() {
           <>
             <div className="mb-8">
               <div className="mb-3 flex flex-wrap items-center gap-2">
-                {routine.isActive && <Badge className="bg-green-600 hover:bg-green-600">Actual</Badge>}
+                {routine.isActive ? (
+                  <Badge className="bg-green-600 hover:bg-green-600">Actual</Badge>
+                ) : (
+                  <Badge variant="outline">Anterior</Badge>
+                )}
                 <Badge variant="secondary">{GOAL_LABELS[routine.goal]}</Badge>
                 <Badge variant="outline">{formatDate(routine.createdAt)}</Badge>
               </div>

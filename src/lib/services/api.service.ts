@@ -3,10 +3,12 @@ import type {
   CreateProgressEntryInput,
   CreateProgressResponse,
   CreateWorkoutSessionInput,
+  FitnessOverviewResponse,
   Profile,
   ProgressHistoryResponse,
   ProgressLatestResponse,
   Routine,
+  RoutineAdjustmentResponse,
   RoutineDetailResponse,
   RoutineHistoryResponse,
   User,
@@ -78,6 +80,16 @@ class ApiService {
   routines = {
     getHistory: (): Promise<RoutineHistoryResponse> => this.request<RoutineHistoryResponse>("/routines/history"),
     getById: (id: string): Promise<RoutineDetailResponse> => this.request<RoutineDetailResponse>(`/routines/${id}`),
+    adjust: (): Promise<RoutineAdjustmentResponse> =>
+      this.request<RoutineAdjustmentResponse>("/routines/adjust", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+  }
+
+  analytics = {
+    getFitnessOverview: (): Promise<FitnessOverviewResponse> =>
+      this.request<FitnessOverviewResponse>("/analytics/fitness-overview"),
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

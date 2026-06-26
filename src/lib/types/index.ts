@@ -76,6 +76,24 @@ export interface RoutineDetailResponse {
   }
 }
 
+export interface RoutineAdjustmentAnalysis {
+  summary: string
+  progressStatus: "improving" | "maintaining" | "declining" | string
+  fatigueLevel: "low" | "medium" | "high" | string
+  recommendedAdjustment: string
+  adherencePercentage?: number | null
+  averageDifficulty?: number | null
+  weightChangeKg?: number | null
+  waistChangeCm?: number | null
+  volumeChangePercent?: number | null
+  restAdjustment?: string | null
+}
+
+export interface RoutineAdjustmentResponse {
+  analysis: RoutineAdjustmentAnalysis
+  routine: Routine
+}
+
 export interface Meal {
   name: string
   time: string
@@ -215,4 +233,17 @@ export interface ProgressLatestResponse {
 
 export interface CreateProgressResponse {
   entry: ProgressEntry
+}
+
+export interface FitnessOverviewResponse {
+  totalSessions: number
+  averageDifficulty: number | null
+  weightChangeKg: number | null
+  waistChangeCm: number | null
+  adherencePercentage: number | null
+  currentWeightKg?: number | null
+  currentWaistCm?: number | null
+  currentWeekSessions?: number
+  totalWorkoutTimeMinutes?: number
+  totalCalories?: number
 }

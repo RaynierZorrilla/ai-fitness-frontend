@@ -7,7 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty"
 import { apiService } from "@/lib/services/api.service"
 import type { WorkoutSessionRecord } from "@/lib/types"
-import { CalendarDays, ChevronLeft, Clock, Dumbbell, Flame, Loader2 } from "lucide-react"
+import { CalendarDays, ChevronLeft, Clock, Dumbbell, Flame, Loader2, Star } from "lucide-react"
 
 function formatMinutes(seconds: number) {
   return `${Math.round(seconds / 60)} min`
@@ -93,7 +93,7 @@ export default function WorkoutHistoryPage() {
                   <CardTitle className="text-lg">{formatDate(session.performedAt)}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid sm:grid-cols-4 gap-4">
+                  <div className="grid sm:grid-cols-5 gap-4">
                     <div className="flex items-center gap-2 text-sm">
                       <Clock className="h-4 w-4 text-blue-500" />
                       {formatMinutes(session.totalSeconds)}
@@ -110,6 +110,12 @@ export default function WorkoutHistoryPage() {
                       <Flame className="h-4 w-4 text-red-500" />
                       {session.estimatedCalories} cal
                     </div>
+                    {typeof session.difficultyRating === "number" && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Star className="h-4 w-4 text-yellow-500" />
+                        Dificultad {session.difficultyRating}/5
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

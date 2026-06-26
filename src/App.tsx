@@ -20,6 +20,7 @@ import WorkoutCompletePage from '@/pages/workout/WorkoutComplete'
 import WorkoutHistoryPage from '@/pages/workout/WorkoutHistory'
 import NutritionPage from '@/pages/Nutrition'
 import ProgressPage from '@/pages/Progress'
+import AnalyticsPage from '@/pages/Analytics'
 
 function App() {
   const navigate = useNavigate()
@@ -54,6 +55,7 @@ function App() {
         <Route path="/workouts/history" element={<WorkoutHistoryPage />} />
         <Route path="/nutrition" element={<NutritionPage />} />
         <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/analytics" element={<AnalyticsPage />} />
       </Routes>
       <Toaster />
     </ThemeProvider>

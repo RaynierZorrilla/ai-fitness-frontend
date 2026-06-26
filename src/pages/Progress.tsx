@@ -82,7 +82,7 @@ function ProgressSummaryCard({ entry }: { entry: ProgressEntry }) {
         <CardDescription>{formatDate(entry.recordedAt)}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid sm:grid-cols-3 gap-4">
+        <div className="grid sm:grid-cols-5 gap-4">
           <div className="rounded-lg bg-muted/50 p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <Scale className="h-4 w-4" />
@@ -103,6 +103,22 @@ function ProgressSummaryCard({ entry }: { entry: ProgressEntry }) {
               <span className="text-sm">Brazos</span>
             </div>
             <p className="text-xl font-bold">{entry.armsCm !== null ? `${entry.armsCm} cm` : "Sin dato"}</p>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-2">
+              <TrendingUp className="h-4 w-4" />
+              <span className="text-sm">% grasa</span>
+            </div>
+            <p className="text-xl font-bold">
+              {entry.bodyFatPercentage !== null ? `${entry.bodyFatPercentage}%` : "Sin dato"}
+            </p>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-4">
+            <div className="flex items-center gap-2 text-muted-foreground mb-2">
+              <Ruler className="h-4 w-4" />
+              <span className="text-sm">Piernas</span>
+            </div>
+            <p className="text-xl font-bold">{entry.legsCm !== null ? `${entry.legsCm} cm` : "Sin dato"}</p>
           </div>
         </div>
         {entry.notes && <p className="mt-4 text-sm text-muted-foreground">{entry.notes}</p>}

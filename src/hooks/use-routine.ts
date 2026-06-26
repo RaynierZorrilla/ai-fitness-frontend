@@ -46,6 +46,21 @@ export function useRoutine() {
     }
   }
 
+  const adjustRoutine = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      const response = await apiService.routines.adjust()
+      setCurrentRoutine(response.routine)
+      return { success: true, analysis: response.analysis, routine: response.routine }
+    } catch (err: any) {
+      setError(err.message)
+      return { success: false, error: err.message }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const getTodayRoutine = (routine: Routine | null): RoutineDay | null => {
     if (!routine) return null
     
@@ -67,6 +82,7 @@ export function useRoutine() {
     isLoading,
     error,
     generateRoutine,
+    adjustRoutine,
     fetchCurrentRoutine,
     getTodayRoutine,
   }

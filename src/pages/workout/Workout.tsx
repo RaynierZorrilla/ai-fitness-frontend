@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import { useAuth } from "@/hooks/use-auth"
 import { useRoutine } from "@/hooks/use-routine"
@@ -11,14 +11,21 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { ProfileIncompleteModal } from "@/components/profile-incomplete-modal"
 import { isProfileComplete } from "@/lib/utils"
 import { DAY_LABELS } from "@/lib/days"
-import { Play, ChevronLeft, Sparkles } from "lucide-react"
+import { apiService } from "@/lib/services/api.service"
+import type { FitnessOverviewResponse, RoutineAdjustmentAnalysis } from "@/lib/types"
+import { Play, ChevronLeft, Sparkles, Loader2, WandSparkles } from "lucide-react"
+import { toast } from "sonner"
 
 export default function WorkoutPage() {
   const navigate = useNavigate()
   const { user, isLoading: authLoading } = useAuth()
-  const { routine, isLoading, fetchCurrentRoutine } = useRoutine()
+  const { routine, isLoading, fetchCurrentRoutine, adjustRoutine } = useRoutine()
   const { profile, isLoading: profileLoading } = useProfile()
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [adjustmentAnalysis, setAdjustmentAnalysis] = useState<RoutineAdjustmentAnalysis | null>(null)
+  const [adjustmentError, setAdjustmentError] = useState<string | null>(null)
+  const [fitnessOverview, setFitnessOverview] = useState<FitnessOverviewResponse | null>(null)
+  const routineListRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -29,6 +36,10 @@ export default function WorkoutPage() {
   useEffect(() => {
     if (user) {
       fetchCurrentRoutine()
+      apiService.analytics
+        .getFitnessOverview()
+        .then((overview) => setFitnessOverview(overview))
+        .catch(() => setFitnessOverview(null))
     }
   }, [user])
 
@@ -39,7 +50,27 @@ export default function WorkoutPage() {
     }
   }, [profile, profileLoading])
 
-  if (authLoading || isLoading || profileLoading) {
+  const handleAdjustRoutine = async () => {
+    setAdjustmentAnalysis(null)
+    setAdjustmentError(null)
+
+    const result = await adjustRoutine()
+
+    if (result.success && result.analysis) {
+      setAdjustmentAnalysis(result.analysis)
+      toast.success("Rutina ajustada correctamente")
+      navigate("/workout", { replace: true })
+    } else {
+      setAdjustmentError(result.error || "No se pudo ajustar la rutina.")
+      toast.error(result.error || "No se pudo ajustar la rutina.")
+    }
+  }
+
+  const handleViewAdjustedRoutine = () => {
+    routineListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+
+  if (authLoading || profileLoading || (isLoading && !routine)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Cargando rutina...</p>
@@ -122,7 +153,92 @@ export default function WorkoutPage() {
           <p className="text-muted-foreground">Plan de entrenamiento personalizado</p>
         </div>
 
-        <div className="space-y-4">
+        <Card className="mb-6 border-orange-500/30 bg-gradient-to-r from-orange-500/5 to-red-600/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <WandSparkles className="h-5 w-5 text-orange-500" />
+              Ajuste inteligente
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-medium">¿Tu rutina se siente muy fácil o demasiado fuerte?</p>
+                <p className="text-sm text-muted-foreground">
+                  La IA revisa tu progreso, fatiga y sesiones recientes para crear una versión ajustada.
+                </p>
+              </div>
+              <Button onClick={handleAdjustRoutine} disabled={isLoading} className="bg-gradient-to-r from-orange-500 to-red-600">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Generando ajuste...
+                  </>
+                ) : (
+                  <>
+                    <WandSparkles className="mr-2 h-4 w-4" />
+                    Ajustar con IA
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {adjustmentError && (
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600">
+                {adjustmentError}
+              </div>
+            )}
+
+            {adjustmentAnalysis && (
+              <div className="rounded-lg border bg-background/70 p-4">
+                <h3 className="mb-3 font-semibold">Análisis IA</h3>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Resumen</p>
+                    <p>{adjustmentAnalysis.summary}</p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-xs text-muted-foreground">Progreso</p>
+                      <p className="font-medium">{adjustmentAnalysis.progressStatus}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-xs text-muted-foreground">Fatiga</p>
+                      <p className="font-medium">{adjustmentAnalysis.fatigueLevel}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-xs text-muted-foreground">Ajuste recomendado</p>
+                      <p className="font-medium">{adjustmentAnalysis.recommendedAdjustment}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-lg border bg-muted/30 p-4">
+                  <p className="mb-3 font-medium">¿Por qué se ajustó la rutina?</p>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li>• Adherencia: {adjustmentAnalysis.adherencePercentage ?? fitnessOverview?.adherencePercentage ?? "Sin dato"}%</li>
+                    <li>
+                      • Dificultad promedio:{" "}
+                      {adjustmentAnalysis.averageDifficulty ?? fitnessOverview?.averageDifficulty ?? "Sin dato"}
+                    </li>
+                    <li>• Fatiga detectada: {adjustmentAnalysis.fatigueLevel}</li>
+                    <li>
+                      • Cambio de peso:{" "}
+                      {adjustmentAnalysis.weightChangeKg ?? fitnessOverview?.weightChangeKg ?? "Sin dato"} kg
+                    </li>
+                  </ul>
+                  <p className="mt-3 text-sm">
+                    La IA aplicó el ajuste recomendado: {adjustmentAnalysis.recommendedAdjustment}.
+                  </p>
+                </div>
+                <Button className="mt-4" onClick={handleViewAdjustedRoutine}>
+                  Ver rutina ajustada
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div ref={routineListRef} className="scroll-mt-24 space-y-4">
           {routine.days.map((dayRoutine, index) => (
             <Card key={dayRoutine.id || index} className="overflow-hidden">
               <CardHeader className="bg-muted/30">

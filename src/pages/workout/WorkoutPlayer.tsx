@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { isDayOfWeek } from "@/lib/days"
+import type { DayOfWeek } from "@/lib/types"
 import { ChevronLeft, Play, Pause, SkipForward, Check } from "lucide-react"
 
 export default function WorkoutPlayerPage() {
@@ -23,6 +24,8 @@ export default function WorkoutPlayerPage() {
   const [currentSet, setCurrentSet] = useState(1)
   const [isResting, setIsResting] = useState(false)
   const [completedSets, setCompletedSets] = useState(0)
+  const [completedExercises, setCompletedExercises] = useState(0)
+  const [hasRequestedRoutine, setHasRequestedRoutine] = useState(false)
   const [startedAt] = useState(() => Date.now())
 
   useEffect(() => {
@@ -32,21 +35,43 @@ export default function WorkoutPlayerPage() {
   }, [user, authLoading, navigate])
 
   useEffect(() => {
+    let isMounted = true
+
     if (user) {
-      fetchCurrentRoutine()
+      setHasRequestedRoutine(false)
+      fetchCurrentRoutine().finally(() => {
+        if (isMounted) {
+          setHasRequestedRoutine(true)
+        }
+      })
+    }
+
+    return () => {
+      isMounted = false
     }
   }, [user])
 
+  const requestedDay = useMemo<DayOfWeek | null>(() => {
+    return isDayOfWeek(day) ? (day.toLowerCase() as DayOfWeek) : null
+  }, [day])
+
   const dayWorkout = useMemo(() => {
-    if (!routine || !isDayOfWeek(day)) return null
-    return routine.days.find((routineDay) => routineDay.dayOfWeek === day) || null
-  }, [routine, day])
+    if (!routine || !requestedDay) return null
+    return routine.days.find((routineDay) => routineDay.dayOfWeek === requestedDay) || null
+  }, [routine, requestedDay])
 
   useEffect(() => {
-    if (!authLoading && !isLoading && (!user || !routine || !isDayOfWeek(day) || !dayWorkout)) {
+    if (authLoading || !user) return
+
+    if (!requestedDay) {
+      navigate("/workout")
+      return
+    }
+
+    if (hasRequestedRoutine && (!routine || !dayWorkout || dayWorkout.exercises.length === 0)) {
       navigate("/workout")
     }
-  }, [authLoading, isLoading, user, routine, day, dayWorkout, navigate])
+  }, [authLoading, user, hasRequestedRoutine, routine, requestedDay, dayWorkout, navigate])
 
   useEffect(() => {
     if (isResting && timerSeconds === 0 && !isTimerRunning) {
@@ -55,7 +80,7 @@ export default function WorkoutPlayerPage() {
     }
   }, [isResting, timerSeconds, isTimerRunning, resetTimer])
 
-  if (authLoading || isLoading) {
+  if (authLoading || isLoading || (user && !hasRequestedRoutine && !routine)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Cargando...</p>
@@ -77,12 +102,15 @@ export default function WorkoutPlayerPage() {
       setTimerSeconds(currentExercise.restSeconds)
       startTimer()
     } else {
-      handleNextExercise()
+      handleNextExercise(true)
     }
   }
 
-  const handleNextExercise = () => {
+  const handleNextExercise = (markCompleted = true) => {
+    const nextCompletedExercises = completedExercises + (markCompleted ? 1 : 0)
+
     if (currentExerciseIndex < dayWorkout.exercises.length - 1) {
+      setCompletedExercises(nextCompletedExercises)
       setCurrentExerciseIndex(currentExerciseIndex + 1)
       setCurrentSet(1)
       setIsResting(false)
@@ -99,7 +127,7 @@ export default function WorkoutPlayerPage() {
           dayOfWeek: dayWorkout.dayOfWeek,
           focus: dayWorkout.focus,
           totalSeconds,
-          completedExercises: dayWorkout.exercises.length,
+          completedExercises: nextCompletedExercises,
           completedSets: totalSets,
           estimatedCalories: totalSets * 8,
           completedAt: new Date().toISOString(),
@@ -214,7 +242,7 @@ export default function WorkoutPlayerPage() {
               </Button>
 
               {currentExerciseIndex < dayWorkout.exercises.length - 1 && (
-                <Button onClick={handleNextExercise} variant="outline" className="w-full bg-transparent">
+                <Button onClick={() => handleNextExercise(false)} variant="outline" className="w-full bg-transparent">
                   <SkipForward className="mr-2 h-4 w-4" />
                   Saltar Ejercicio
                 </Button>
