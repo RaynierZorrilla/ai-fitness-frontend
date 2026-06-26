@@ -19,6 +19,8 @@ import WorkoutPlayerPage from '@/pages/workout/WorkoutPlayer'
 import WorkoutCompletePage from '@/pages/workout/WorkoutComplete'
 import WorkoutHistoryPage from '@/pages/workout/WorkoutHistory'
 import NutritionPage from '@/pages/Nutrition'
+import NutritionHistoryPage from '@/pages/nutrition/NutritionHistory'
+import NutritionDetailPage from '@/pages/nutrition/NutritionDetail'
 import ProgressPage from '@/pages/Progress'
 import AnalyticsPage from '@/pages/Analytics'
 
@@ -54,6 +56,8 @@ function App() {
         <Route path="/workout/complete" element={<WorkoutCompletePage />} />
         <Route path="/workouts/history" element={<WorkoutHistoryPage />} />
         <Route path="/nutrition" element={<NutritionPage />} />
+        <Route path="/nutrition/history" element={<NutritionHistoryPage />} />
+        <Route path="/nutrition/:id" element={<NutritionDetailPage />} />
         <Route path="/progress" element={<ProgressPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
       </Routes>

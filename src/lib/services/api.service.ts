@@ -4,6 +4,8 @@ import type {
   CreateProgressResponse,
   CreateWorkoutSessionInput,
   FitnessOverviewResponse,
+  MealPlanHistoryResponse,
+  MealPlanResponse,
   Profile,
   ProgressHistoryResponse,
   ProgressLatestResponse,
@@ -90,6 +92,17 @@ class ApiService {
   analytics = {
     getFitnessOverview: (): Promise<FitnessOverviewResponse> =>
       this.request<FitnessOverviewResponse>("/analytics/fitness-overview"),
+  }
+
+  nutrition = {
+    generate: (): Promise<MealPlanResponse> =>
+      this.request<MealPlanResponse>("/nutrition/generate", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    getCurrent: (): Promise<MealPlanResponse> => this.request<MealPlanResponse>("/nutrition/current"),
+    getHistory: (): Promise<MealPlanHistoryResponse> => this.request<MealPlanHistoryResponse>("/nutrition/history"),
+    getById: (id: string): Promise<MealPlanResponse> => this.request<MealPlanResponse>(`/nutrition/${id}`),
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -217,12 +230,12 @@ class ApiService {
   async generateNutrition(profileData: any) {
     return this.request("/nutrition/generate", {
       method: "POST",
-      body: JSON.stringify(profileData),
+      body: JSON.stringify(profileData || {}),
     })
   }
 
   async getTodayNutrition() {
-    return this.request("/nutrition/today")
+    return this.nutrition.getCurrent()
   }
 
   // Progress

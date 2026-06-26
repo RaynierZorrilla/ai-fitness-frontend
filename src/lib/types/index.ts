@@ -96,26 +96,59 @@ export interface RoutineAdjustmentResponse {
 
 export interface Meal {
   name: string
-  time: string
   calories: number
-  protein: number
-  carbs: number
-  fats: number
-  ingredients: string[]
-  instructions?: string
+  proteinG: number
+  carbsG: number
+  fatsG: number
+  foods: string[]
 }
 
-export interface NutritionPlan {
-  id: string
-  userId: string
-  date: Date
+export interface MealPlanDay {
+  id?: string
+  dayOfWeek: DayOfWeek
+  position?: number
   meals: Meal[]
-  totalCalories: number
-  totalProtein: number
-  totalCarbs: number
-  totalFats: number
-  shoppingList: string[]
-  createdAt: Date
+}
+
+export interface MealPlan {
+  id: string
+  title: string
+  description: string
+  goal: FitnessGoal
+  dailyCalories: number
+  macros: {
+    proteinG: number
+    carbsG: number
+    fatsG: number
+  }
+  isActive?: boolean
+  createdAt?: string
+  updatedAt?: string
+  days: MealPlanDay[]
+}
+
+export interface MealPlanHistoryItem {
+  id: string
+  title: string
+  description: string
+  goal: FitnessGoal
+  dailyCalories: number
+  macros: {
+    proteinG: number
+    carbsG: number
+    fatsG: number
+  }
+  isActive: boolean
+  createdAt: string
+  dayCount: number
+}
+
+export interface MealPlanResponse {
+  mealPlan: MealPlan | null
+}
+
+export interface MealPlanHistoryResponse {
+  mealPlans: MealPlanHistoryItem[]
 }
 
 export interface Progress {
